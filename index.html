@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f4f5">
+  <title>Bellamy & Blakely Reward Bank</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root{
+      --bg:#f7f7f8; --card:#ffffff; --text:#18181b; --muted:#71717a; --border:#e4e4e7;
+      --pink:#f9a8d4; --pink2:#fce7f3; --green:#86efac; --green2:#dcfce7;
+      --danger:#fee2e2; --dangerText:#991b1b; --accent:#52525b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+    main{max-width:760px;margin:0 auto;padding:16px 14px 40px}
+    h1{font-size:1.35rem;margin:4px 0 14px}
+    h2{font-size:1rem;margin:0 0 10px}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    button,input{font:inherit}
+    button{min-height:44px;border:1px solid var(--border);background:#fff;border-radius:14px;padding:10px 14px;cursor:pointer}
+    button:active{transform:scale(.99)}
+    .tab.active.bellamy{background:var(--pink2);border-color:var(--pink)}
+    .tab.active.blakely{background:var(--green2);border-color:var(--green)}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px;margin-top:12px}
+    .stat small{display:block;color:var(--muted)}
+    .stat strong{display:block;font-size:1.55rem;margin-top:3px}
+    .progress{height:11px;background:#e4e4e7;border-radius:99px;overflow:hidden;margin-top:10px}
+    .progress>div{height:100%;background:var(--accent);width:0%}
+    .row{display:flex;align-items:center;gap:10px}
+    .between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .task{width:100%;display:flex;align-items:center;gap:10px;text-align:left;margin-top:8px}
+    .check{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);display:grid;place-items:center;flex:0 0 auto}
+    .done .check{background:var(--accent);color:#fff}
+    .done .label{text-decoration:line-through;opacity:.55}
+    .label{flex:1}
+    .pts{font-weight:700;white-space:nowrap}
+    .danger{background:var(--danger);color:var(--dangerText);border-color:#fecaca}
+    .dangerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    input{width:100%;min-height:46px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:#fff}
+    .formGrid{display:grid;grid-template-columns:1fr 110px;gap:8px}
+    .full{grid-column:1/-1}
+    .primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+    .muted{color:var(--muted);font-size:.9rem}
+    .historyItem{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);padding:8px 0}
+    .historyItem:last-child{border-bottom:0}
+    .sectionTitle{margin-top:18px}
+    .smallBtn{min-height:38px;padding:7px 10px;font-size:.88rem}
+    .hidden{display:none}
+    .note{font-size:.82rem;color:var(--muted);margin-top:10px}
+    @media(max-width:520px){
+      .grid3{grid-template-columns:1fr 1fr}
+      .grid3 .stat:last-child{grid-column:1/-1}
+      .dangerGrid{grid-template-columns:1fr}
+      .formGrid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Bellamy & Blakely's Reward Bank</h1>
+
+  <div class="tabs">
+    <button class="tab bellamy active" data-kid="Bellamy">Bellamy 💗</button>
+    <button class="tab blakely" data-kid="Blakely">Blakely 💚</button>
+  </div>
+
+  <section class="grid3">
+    <div class="card stat"><small>Today</small><strong id="todayPts">0</strong></div>
+    <div class="card stat"><small>Bank</small><strong id="bankPts">0</strong></div>
+    <div class="card stat"><small>Lifetime earned</small><strong id="lifePts">0</strong></div>
+  </section>
+
+  <section class="card">
+    <div class="between">
+      <div>
+        <h2>🎯 Savings goal</h2>
+        <div id="goalText" class="muted">No goal yet</div>
+      </div>
+      <button id="toggleGoal" class="smallBtn">Set goal</button>
+    </div>
+    <div class="progress"><div id="goalBar"></div></div>
+    <form id="goalForm" class="hidden sectionTitle">
+      <div class="formGrid">
+        <input id="goalName" placeholder="What are they saving for?">
+        <input id="goalCost" type="number" min="100" value="300" aria-label="Goal points">
+        <button class="primary full" type="submit">Save goal</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="sectionTitle">
+    <div class="between">
+      <h2 id="checkTitle">Today's checklist</h2>
+      <button id="newDay" class="smallBtn">New day</button>
+    </div>
+    <div id="taskList"></div>
+  </section>
+
+  <section class="card">
+    <h2>⭐ Extra chore / bonus points</h2>
+    <div class="muted">Add any extra job and record exactly what it was for.</div>
+    <form id="bonusForm" class="sectionTitle">
+      <div class="formGrid">
+        <input id="bonusReason" placeholder="Example: Helped clean the kitchen">
+        <input id="bonusPoints" type="number" min="1" max="100" value="2" aria-label="Bonus points">
+        <button class="primary full" type="submit">Add points</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="sectionTitle">
+    <h2>⚠️ Consequences</h2>
+    <div class="muted">Tap each time the behavior happens. These subtract 1 point.</div>
+    <div class="dangerGrid" id="behaviorList"></div>
+  </section>
+
+  <section class="card">
+    <h2>🎁 Reward bank</h2>
+    <div id="rewardStatus" class="muted"></div>
+    <div class="card" style="margin-top:10px">
+      <strong>Toy / item under $15</strong>
+      <div class="muted">Suggested cost: 100–150 points</div>
+    </div>
+    <form id="redeemForm" class="sectionTitle">
+      <div class="formGrid">
+        <input id="rewardName" placeholder="What reward are they getting?">
+        <input id="rewardCost" type="number" min="100" value="100" aria-label="Reward points">
+        <button class="primary full" type="submit">Redeem points</button>
+      </div>
+    </form>
+    <div class="note">They never automatically cash out at 100. Their bank keeps growing until you redeem something.</div>
+  </section>
+
+  <section class="card">
+    <div class="between">
+      <h2>History</h2>
+      <button id="undoBtn" class="smallBtn">Undo last</button>
+    </div>
+    <div id="history"></div>
+  </section>
+
+  <div class="note">Everything is saved on this device in your browser. Use the same browser/device to keep the balances.</div>
+</main>
+
+<script>
+(() => {
+  const COMMON = [
+    ["Pick up toys",2],["Make bed",2],["Put dirty clothes in laundry",1],
+    ["Brush teeth — morning",1],["Brush teeth — evening",1],["Brush hair",2],
+    ["Put clean clothes away",2],["Get dressed",1],["Homework",2],
+    ["Be read to / reading time",1],["Be kind",1],["Be respectful",1],
+    ["Bath time",1],["Go to bed on time",1],["Clear own dishes",1],
+    ["Put shoes/backpack away",1],["Put books away",1],["Help feed pet",2],
+    ["Water plants",1],["Help carry groceries",2],["Help sibling",2],
+    ["Chore without reminder",1],["Morning routine without repeated reminders",2],
+    ["Bedtime routine without repeated reminders",2]
+  ];
+
+  const BELLAMY_EXTRA = [
+    ["Unload dishwasher",3],["Vacuum one room",2],["Read 30 minutes",5],
+    ["Read to Blakely",2],["Set table",2],["Wipe table/counter",1],
+    ["Help with trash/recycling",2],["Tidy bedroom floor",2],["Match/fold socks",2]
+  ];
+
+  const DEFAULT_STATE = {
+    Bellamy:{tasks:[...COMMON,...BELLAMY_EXTRA],bank:0,today:0,lifetime:0,done:{},history:[],goal:"",goalCost:0},
+    Blakely:{tasks:[...COMMON],bank:0,today:0,lifetime:0,done:{},history:[],goal:"",goalCost:0}
+  };
+
+  const STORAGE_KEY = "bb_reward_bank_v1";
+  let current = "Bellamy";
+  let state = load();
+
+  function load(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if(saved && saved.Bellamy && saved.Blakely) return saved;
+    }catch(e){}
+    return structuredClone ? structuredClone(DEFAULT_STATE) : JSON.parse(JSON.stringify(DEFAULT_STATE));
+  }
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function currentState(){ return state[current]; }
+
+  function addEvent(label, points, type, key=null){
+    const s = currentState();
+    s.today += points;
+    s.bank = Math.max(0, s.bank + points);
+    if(points > 0) s.lifetime += points;
+    s.history.push({label,points,type,key,time:new Date().toISOString()});
+    save();
+    render();
+  }
+
+  function render(){
+    const s = currentState();
+    document.querySelectorAll(".tab").forEach(btn=>{
+      btn.classList.toggle("active", btn.dataset.kid===current);
+      btn.setAttribute("aria-pressed", btn.dataset.kid===current ? "true":"false");
+    });
+
+    todayPts.textContent = (s.today>0?"+":"") + s.today;
+    bankPts.textContent = s.bank;
+    lifePts.textContent = s.lifetime;
+    checkTitle.textContent = current + "'s checklist";
+
+    if(s.goal && s.goalCost){
+      goalText.textContent = `${s.goal} • ${s.bank} / ${s.goalCost} points`;
+      goalBar.style.width = Math.min(100,(s.bank/s.goalCost)*100) + "%";
+    } else {
+      goalText.textContent = "No goal yet";
+      goalBar.style.width = "0%";
+    }
+
+    taskList.innerHTML = "";
+    s.tasks.forEach(([name,pts], i)=>{
+      const key = "task-"+i;
+      const done = !!s.done[key];
+      const btn = document.createElement("button");
+      btn.className = "task" + (done ? " done":"");
+      btn.type = "button";
+      btn.innerHTML = `<span class="check">${done?"✓":""}</span><span class="label">${escapeHtml(name)}</span><span class="pts">+${pts}</span>`;
+      btn.addEventListener("click",()=>{
+        if(done) return;
+        s.done[key]=true;
+        addEvent(name, pts, "task", key);
+      });
+      taskList.appendChild(btn);
+    });
+
+    behaviorList.innerHTML = "";
+    [["Yelling / screaming",-1],["Hitting",-1],["Arguing",-1]].forEach(([name,pts])=>{
+      const btn=document.createElement("button");
+      btn.className="danger";
+      btn.type="button";
+      btn.textContent = `${name}  ${pts}`;
+      btn.addEventListener("click",()=>addEvent(name,pts,"behavior"));
+      behaviorList.appendChild(btn);
+    });
+
+    rewardStatus.textContent = s.bank < 100
+      ? `${100-s.bank} more points until ${current} can cash in.`
+      : `${current} can cash in now — or keep saving as long as they want.`;
+
+    if(!s.history.length){
+      history.innerHTML = `<div class="muted">No activity yet.</div>`;
+    }else{
+      history.innerHTML = s.history.slice().reverse().map(x=>
+        `<div class="historyItem"><span>${escapeHtml(x.label)}</span><strong>${x.points>0?"+":""}${x.points}</strong></div>`
+      ).join("");
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  }
+
+  document.querySelectorAll(".tab").forEach(btn=>{
+    btn.addEventListener("click",()=>{current=btn.dataset.kid;render();});
+  });
+
+  bonusForm.addEventListener("submit",e=>{
+    e.preventDefault();
+    const reason=bonusReason.value.trim();
+    const pts=Math.max(1,Math.min(100,Number(bonusPoints.value)||1));
+    if(!reason){alert("Enter what the extra points were for.");return;}
+    addEvent("Extra: "+reason,pts,"bonus");
+    bonusReason.value="";
+    bonusPoints.value="2";
+  });
+
+  toggleGoal.addEventListener("click",()=>goalForm.classList.toggle("hidden"));
+  goalForm.addEventListener("submit",e=>{
+    e.preventDefault();
+    const name=goalName.value.trim();
+    const cost=Math.max(100,Number(goalCost.value)||100);
+    if(!name){alert("Enter a savings goal.");return;}
+    const s=currentState();
+    s.goal=name;s.goalCost=cost;
+    save();goalForm.classList.add("hidden");render();
+  });
+
+  redeemForm.addEventListener("submit",e=>{
+    e.preventDefault();
+    const s=currentState();
+    const name=rewardName.value.trim();
+    const cost=Math.max(100,Number(rewardCost.value)||100);
+    if(!name){alert("Enter the reward.");return;}
+    if(s.bank<100){alert("They need at least 100 points before cashing in.");return;}
+    if(cost>s.bank){alert(`${current} only has ${s.bank} points.`);return;}
+    s.bank -= cost;
+    s.history.push({label:"Reward: "+name,points:-cost,type:"reward",time:new Date().toISOString()});
+    save();rewardName.value="";render();
+  });
+
+  newDay.addEventListener("click",()=>{
+    if(!confirm(`Start a new day for ${current}? Their bank will stay the same.`)) return;
+    const s=currentState();
+    s.today=0;s.done={};
+    save();render();
+  });
+
+  undoBtn.addEventListener("click",()=>{
+    const s=currentState();
+    const x=s.history.pop();
+    if(!x) return;
+    if(x.type==="reward"){
+      s.bank += Math.abs(x.points);
+    }else{
+      s.today -= x.points;
+      s.bank = Math.max(0,s.bank-x.points);
+      if(x.points>0) s.lifetime=Math.max(0,s.lifetime-x.points);
+      if(x.type==="task" && x.key) delete s.done[x.key];
+    }
+    save();render();
+  });
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
